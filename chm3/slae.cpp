@@ -175,14 +175,19 @@ vector<real> solveSLAE(vector<real>gg, vector<real>f, vector<real>x, vector<real
 	
 	vector <real> result(diagonal.size(),0.0);
 	int itter = 0;
-	while (itter<maxitter && CalcRealtiveResidual(r,f)>epsilon)
+	real residual = CalcRealtiveResidual(r, f);
+	while (itter<maxitter && residual>epsilon)
 	{
+		cout << "itter: " << itter << endl;
+		cout << "residual: " << residual << endl << endl;
 		alphaK = CalcAlphaK(p, r);
 		result = VectorPlusVector(result, VectorMultiplyByConst(z, alphaK));
 		r = VectorMinusVector(r, VectorMultiplyByConst(p, alphaK));
 		bettaK = CalcBettaK(p, r, gg, ig, jg, diagonal);
 		z = VectorPlusVector(r, VectorMultiplyByConst(z, bettaK));
 		p = VectorPlusVector(multiplyVectorByMatrix(gg, jg, ig, diagonal, r), VectorMultiplyByConst(p, bettaK));
+		residual = CalcRealtiveResidual(r, f);
+		itter++;
 	}
 
 	return result;
