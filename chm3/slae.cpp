@@ -1,19 +1,16 @@
 #pragma once
 #include "slae.h"
 
-vector <real> DiagonalElements; // diagonal elements of the matrix A
-vector <real> VectorF; // right side vector
-vector <real> X;// first approximation and solution
+vector <real> DiagonalElements; 
+vector <real> VectorF; 
+vector <real> X;
 vector <real> Values; // contains elements of matrix A line by line (bottom triangle only without main diagonal)
 vector <int> PointerNumberOfValuesInRow; // contains pointers number of values in a row (see row sparse format)
 vector <int> PointerColumnOfValueElement;// [i] element shows column of Values[i] in matrix A (see sparse format)
-size_t maxitter, N, epsilon; //maxitter is number of maximum iterations  N is matrix size, epsilon is residual
-
+size_t maxitter, N, epsilon; 
 #pragma region methods
 
-// it works in compact format, and returns matrix*vectorForMultiply
-// count of columns in matrix should equals count of rows in vectorForMultiply
-// matrix should be square
+// it works in compact format
 vector <real> multiplyVectorByMatrix(vector<vector<real>>matrix, vector<real> vectorForMultiply)
 {
 	vector<real>result(vectorForMultiply.size(), 0.0);
@@ -25,7 +22,6 @@ vector <real> multiplyVectorByMatrix(vector<vector<real>>matrix, vector<real> ve
 }
 
 
-//writes your vector to Console
 void writeToConsole(vector<real> vectorToWrite)
 {
 	cout.precision(17);
@@ -34,7 +30,7 @@ void writeToConsole(vector<real> vectorToWrite)
 	cout << endl;
 }
 
-//writes your matrix to Console
+
 void writeToConsole(vector<vector<real>> matrixToWrite)
 {
 	for (auto v : matrixToWrite)
@@ -48,7 +44,6 @@ void writeToConsole(vector<vector<real>> matrixToWrite)
 
 
 // returns the scalar product of (a,b)
-// vectors A and B should have same sizes
 real CalcScalarProduct(vector<real>A, vector<real> B)
 {
 	if (A.size() != B.size()) throw invalid_argument("A and B should have same sizes");
@@ -63,14 +58,12 @@ real CalcScalarProduct(vector<real>A, vector<real> B)
 
 //calcs AlphaK  by p and r(argument p is p(k-1) and  r is r(k-1))
 // AlphaK = (p(k-1),r(k-1))/(p(k-1),p(k-1))
-// vectors p and r should have same sizes
 real CalcAlphaK(vector<real>p, vector<real> r)
 {
 	return (CalcScalarProduct(p, r) / CalcScalarProduct(p, p));
 }
 
 
-//reads vector from file
 template <typename T>
 void ReadVectorFromFile(ifstream& file, vector<T>& myVector)
 {
@@ -78,8 +71,7 @@ void ReadVectorFromFile(ifstream& file, vector<T>& myVector)
 		file >> element;
 }
 
-//returns result of  vector A - vector B
-// vectors A and B should have same sizes
+
 vector<real> VectorMinusVector(vector<real>A, vector<real>B)
 {
 	if (A.size() != B.size()) throw invalid_argument("A  and B should have same sizes");
@@ -92,10 +84,7 @@ vector<real> VectorMinusVector(vector<real>A, vector<real>B)
 }
 
 
-// it works in row sparse format, and returns matrix*vectorForMultiply
-// values -- should contain values, [i] element of columns should show column of value[i], diagonal should contain diagonal elements
-// PointerOfNumberOfValuesInRow is ig array
-// for more info see row sparse format
+// it works in row sparse format
 vector<real> multiplyVectorByMatrix(vector<real>Values, vector<int> ColumnsPointer, vector<int>PointerOfNumberOfValuesInRow, vector<real>diagonal, vector<real> multiplicator)
 {
 	vector <real> result(diagonal.size(), 0.0);
@@ -115,7 +104,7 @@ vector<real> multiplyVectorByMatrix(vector<real>Values, vector<int> ColumnsPoint
 
 }
 
-// this method reads data from files, allocates memory for vectors,matrix, sets first approximation
+//reads data from files, allocates memory for vectors,matrix, sets first approximation
 void InitSolution()
 {
 	ifstream kuslauFile("kuslau.txt");
@@ -158,14 +147,13 @@ real VectorNorm(vector<real> myVector)
 }
 
 // calcs norm(A)/norm(B) 
-real CalcRealtiveResidual(vector<real> A, vector<real> B)
+real CalcRelativeResidual(vector<real> A, vector<real> B)
 {
 	return (VectorNorm(A) / VectorNorm(B));
 }
 
 
 // solves SLAE Ax=f 
-//returns X
 vector<real> solveSLAE(vector<real>gg, vector<real>f, vector<real>x, vector<real> diagonal, vector<int> ig, vector<int> jg)
 {
 	vector <real> r = VectorMinusVector(f, multiplyVectorByMatrix(gg, jg, ig, diagonal, x));
@@ -175,7 +163,7 @@ vector<real> solveSLAE(vector<real>gg, vector<real>f, vector<real>x, vector<real
 	
 	vector <real> result(diagonal.size(),0.0);
 	int itter = 0;
-	real residual = CalcRealtiveResidual(r, f);
+	real residual = CalcRelativeResidual(r, f);
 	while (itter<maxitter && residual>epsilon)
 	{
 		cout << "itter: " << itter << endl;
@@ -186,7 +174,7 @@ vector<real> solveSLAE(vector<real>gg, vector<real>f, vector<real>x, vector<real
 		bettaK = CalcBettaK(p, r, gg, ig, jg, diagonal);
 		z = VectorPlusVector(r, VectorMultiplyByConst(z, bettaK));
 		p = VectorPlusVector(multiplyVectorByMatrix(gg, jg, ig, diagonal, r), VectorMultiplyByConst(p, bettaK));
-		residual = CalcRealtiveResidual(r, f);
+		residual = CalcRelativeResidual(r, f);
 		itter++;
 	}
 
@@ -194,15 +182,13 @@ vector<real> solveSLAE(vector<real>gg, vector<real>f, vector<real>x, vector<real
 }
 
 //calcs BettaK  by p, A and r(argument p is p(k-1) and  r is r(k-1), A is values,ig,jg,diagonal - row sparse format )
-// vectors p and r should have same sizes
 real CalcBettaK(vector<real>p, vector<real>r, vector<real>values, vector<int> ig, vector<int> jg, vector<real>diagonal)
 {
 	vector <real> tmp = multiplyVectorByMatrix(values, jg, ig, diagonal, r);
 	return -(CalcScalarProduct(p, tmp) / (CalcScalarProduct(p, p)));
 }
 
-//returns result of  vector A + vector B
-// vectors A and B should have same sizes
+
 vector<real> VectorPlusVector(vector<real> A, vector<real> B)
 {
 	if (A.size() != B.size()) throw invalid_argument("A and B should have same sizes");
@@ -213,7 +199,7 @@ vector<real> VectorPlusVector(vector<real> A, vector<real> B)
 	return result;
 }
 
-//multiplies a vector by a constant
+
 vector<real> VectorMultiplyByConst(vector<real> multiplyVector, real constant)
 {
 	for (auto& v : multiplyVector)
@@ -221,8 +207,7 @@ vector<real> VectorMultiplyByConst(vector<real> multiplyVector, real constant)
 	return multiplyVector;
 }
 
-// returns true if A == B, false if A!=B
-//this function needs only for debug
+
 bool areVectorsEqual(vector<real> A, vector<real>B)
 {
 	for (size_t i = 0; i < A.size(); i++)
@@ -232,7 +217,7 @@ bool areVectorsEqual(vector<real> A, vector<real>B)
 
 
 
-// creates Hilbert Matrix n size;
+//  n is matrix size;
 void CreateHilbertMatrix(int n)
 {
 	PointerNumberOfValuesInRow.resize(n + 1);
